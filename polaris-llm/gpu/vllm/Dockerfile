@@ -8,17 +8,19 @@ ENV POLARIS_VLLM_DIR="/models"
 RUN apt-get update && apt-get install -y \
     git \
     net-tools \
+    build-essential \
+    python3-dev \
+    kmod \
+    cmake \
     && rm -rf /var/lib/apt/lists/*
 
-RUN pip install --no-cache-dir huggingface_hub vllm
+RUN pip install --no-cache-dir --upgrade pip
+RUN pip install --no-cache-dir huggingface_hub 
+RUN pip install --no-cache-dir "vllm"
+RUN pip install --no-cache-dir "transformers"
 
 RUN mkdir -p $POLARIS_VLLM_DIR
 WORKDIR $POLARIS_VLLM_DIR
-
-# Use Hugging Face Hub to download the model
-RUN python -c "import os; from huggingface_hub import login, snapshot_download; \
-    login(token=os.environ['HF_TOKEN']); \
-    snapshot_download(repo_id=os.environ['POLARIS_VLLM_MODEL'], local_dir=os.environ['POLARIS_VLLM_DIR'], revision='main')"
 
 COPY src/start.sh /opt/start.sh
 RUN chmod +x /opt/start.sh
