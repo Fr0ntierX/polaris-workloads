@@ -15,9 +15,7 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 RUN pip install --no-cache-dir --upgrade pip
-RUN pip install --no-cache-dir huggingface_hub 
-RUN pip install --no-cache-dir "vllm"
-RUN pip install --no-cache-dir "transformers"
+RUN pip install --no-cache-dir huggingface_hub vllm transformers
 
 RUN mkdir -p $POLARIS_VLLM_DIR
 WORKDIR $POLARIS_VLLM_DIR
