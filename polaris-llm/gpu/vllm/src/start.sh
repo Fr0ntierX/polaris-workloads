@@ -10,7 +10,7 @@ if [ -z "$POLARIS_VLLM_MODEL" ]; then
     exit 1
 fi
 
-if [ ! -d "$POLARIS_VLLM_DIR/$POLARIS_VLLM_MODEL" ]; then
+if [ ! -d "$POLARIS_VLLM_DIR/$POLARIS_VLLM_MODEL-$POLARIS_VLLM_VERSION" ]; then
     echo "Model $POLARIS_VLLM_MODEL not found locally. Downloading..."
     python -c "
 import os
