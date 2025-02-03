@@ -13,6 +13,7 @@ permissions:
 jobs:
   find-and-build:
     runs-on: ubuntu-latest
+    environment: test-workflows
     env:
       ACR_REPO: fr0ntierxpublicdev.azurecr.io
     
