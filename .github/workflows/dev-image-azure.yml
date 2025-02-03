@@ -21,6 +21,15 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 2
+
+      - name: Get changed files
+        id: files
+        run: |
+          CHANGED_FILES=$(git diff --name-only HEAD^ HEAD | grep Dockerfile || true)
+          echo "changes=$CHANGED_FILES" >> $GITHUB_OUTPUT
+          echo "Found changed Dockerfiles: $CHANGED_FILES"
 
       - name: Log in to Azure Container Registry
         uses: azure/docker-login@v1
@@ -37,8 +46,10 @@ jobs:
             SERVICE_NAME=$(basename "$SERVICE_DIR")
             
             echo "🏗️ Building $SERVICE_NAME from $file"
-            docker build -f "$file" -t $SERVICE_NAME .
+            cd $SERVICE_DIR
+            docker build -f Dockerfile -t $SERVICE_NAME .
             docker tag $SERVICE_NAME ${{ env.ACR_REPO }}/$SERVICE_NAME:latest
             docker push ${{ env.ACR_REPO }}/$SERVICE_NAME:latest
+            cd -
             echo "✅ Pushed $SERVICE_NAME"
           done
