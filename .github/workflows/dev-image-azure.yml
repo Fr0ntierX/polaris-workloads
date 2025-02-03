@@ -10,6 +10,12 @@ on:
       - "**/start.sh"
       - "**/config/**"
   workflow_dispatch:
+    inputs:
+      path:
+        description: 'Path to Dockerfile to build'
+        required: false
+        type: string
+        default: '**/Dockerfile*'
 
 permissions:
   id-token: write
