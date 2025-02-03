@@ -70,12 +70,9 @@ jobs:
   build-and-push:
     needs: [find-changes]
     runs-on: ubuntu-latest
-    environment: Docker Dev
     if: needs.find-changes.outputs.changed != ''
-
     env:
       ACR_REPO: fr0ntierxpublicdev.azurecr.io
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
