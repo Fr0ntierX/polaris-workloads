@@ -32,20 +32,29 @@ jobs:
         run: |
           # Find all Dockerfiles
           DOCKERFILES=$(find . -name "Dockerfile" -type f)
+          echo "Found Dockerfiles: $DOCKERFILES"
           
           # Build and push each Dockerfile
           for file in $DOCKERFILES; do
             SERVICE_DIR=$(dirname "$file")
             SERVICE_NAME=$(basename "$SERVICE_DIR")
             
-            if [ ! -f "$SERVICE_DIR/src/start.sh" ]; then
-              mkdir -p "$SERVICE_DIR/src"
-              cat << 'EOF' > "$SERVICE_DIR/src/start.sh"
-              #!/bin/bash
-              ollama serve
-              EOF
-              chmod +x "$SERVICE_DIR/src/start.sh"
+            echo "📁 Processing $SERVICE_DIR"
+            
+            # Always create src directory and start.sh
+            mkdir -p "$SERVICE_DIR/src"
+            cat << 'EOF' > "$SERVICE_DIR/src/start.sh"
+            #!/bin/bash
+            if [ -f /opt/venv/bin/activate ]; then
+              source /opt/venv/bin/activate
             fi
+            if command -v ollama &> /dev/null; then
+              ollama serve
+            else
+              python -m vllm.entrypoints.api_server
+            fi
+            EOF
+            chmod +x "$SERVICE_DIR/src/start.sh"
             
             echo "🏗️ Building $SERVICE_NAME from $file"
             
