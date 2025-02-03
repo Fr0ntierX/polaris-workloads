@@ -8,15 +8,16 @@ on:
 
 permissions:
   id-token: write
-  contents: write
+  contents: read
 
 jobs:
-  find-and-build:
+  build-and-push:
     runs-on: ubuntu-latest
     environment: test-workflows
+
     env:
       ACR_REPO: fr0ntierxpublicdev.azurecr.io
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -28,24 +29,16 @@ jobs:
           username: ${{ secrets.AZURE_CLIENT_ID }}
           password: ${{ secrets.AZURE_CLIENT_SECRET }}
 
-      - name: Find and Build Dockerfiles
+      - name: Build and Push Changed Images
+        if: steps.files.outputs.changes != ''
         run: |
-          # Find all Dockerfiles
-          DOCKERFILES=$(find . -name "Dockerfile" -type f)
-          
-          # Build and push each Dockerfile
-          for file in $DOCKERFILES; do
+          for file in ${{ steps.files.outputs.changes }}; do
             SERVICE_DIR=$(dirname "$file")
             SERVICE_NAME=$(basename "$SERVICE_DIR")
             
             echo "🏗️ Building $SERVICE_NAME from $file"
-            
-            # Build and tag
             docker build -f "$file" -t $SERVICE_NAME .
             docker tag $SERVICE_NAME ${{ env.ACR_REPO }}/$SERVICE_NAME:latest
-            
-            # Push
             docker push ${{ env.ACR_REPO }}/$SERVICE_NAME:latest
-            
             echo "✅ Pushed $SERVICE_NAME"
           done
