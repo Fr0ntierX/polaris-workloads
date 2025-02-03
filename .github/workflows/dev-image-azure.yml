@@ -42,14 +42,17 @@ jobs:
         if: steps.files.outputs.changes != ''
         run: |
           for file in ${{ steps.files.outputs.changes }}; do
-            SERVICE_DIR=$(dirname "$file")
-            SERVICE_NAME=$(basename "$SERVICE_DIR")
+            PARENT_DIR=$(dirname $(dirname "$file"))
+            TYPE=$(basename $(dirname "$file"))
+            SERVICE=$(basename "$PARENT_DIR")
+            PROJECT=$(basename $(dirname "$PARENT_DIR"))
+            IMAGE_NAME="$PROJECT-$SERVICE-$TYPE"
             
-            echo "🏗️ Building $SERVICE_NAME from $file"
-            cd $SERVICE_DIR
-            docker build -f Dockerfile -t $SERVICE_NAME .
-            docker tag $SERVICE_NAME ${{ env.ACR_REPO }}/$SERVICE_NAME:latest
-            docker push ${{ env.ACR_REPO }}/$SERVICE_NAME:latest
+            echo "🏗️ Building $IMAGE_NAME from $file"
+            cd $(dirname "$file")
+            docker build -f Dockerfile -t $IMAGE_NAME .
+            docker tag $IMAGE_NAME ${{ env.ACR_REPO }}/$IMAGE_NAME:latest
+            docker push ${{ env.ACR_REPO }}/$IMAGE_NAME:latest
             cd -
-            echo "✅ Pushed $SERVICE_NAME"
+            echo "✅ Pushed $IMAGE_NAME"
           done
