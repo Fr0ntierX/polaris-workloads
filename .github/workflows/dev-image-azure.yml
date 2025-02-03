@@ -1,81 +1,21 @@
-name: Build and Push Docker Image Azure
+name: Build and Push Docker Images Azure
 
 on:
-  pull_request:
-    types: [closed]
+  push:
     branches:
       - test/workflows
-    paths:
-      - "**/Dockerfile*"
-      - "**/start.sh"
-      - "**/config/**"
-      - ".github/workflows/*.yml" 
   workflow_dispatch:
-    inputs:
-      path:
-        description: 'Path to Dockerfile to build'
-        required: false
-        type: string
-        default: '**/Dockerfile*'
 
 permissions:
   id-token: write
   contents: read
-  pull-requests: read
-  deployments: write
 
 jobs:
-  find-changes:
+  find-and-build:
     runs-on: ubuntu-latest
-    if: github.event.pull_request.merged == true || github.event_name == 'workflow_dispatch'
-    outputs:
-      changed: ${{ steps.process.outputs.dockerfiles }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 2
-
-      - name: Find changed files
-        id: files
-        run: |
-          if [[ ${{ github.event_name }} == 'pull_request' ]]; then
-            echo "all_changes=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }})" >> $GITHUB_OUTPUT
-          else
-            echo "all_changes=$(git diff --name-only HEAD^ HEAD)" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Process changed files
-        id: process
-        run: |
-          ALL_CHANGES="${{ steps.files.outputs.all_changes }}"
-          DOCKERFILES=""
-
-          while IFS= read -r file; do
-            if [[ $file == *"Dockerfile"* ]]; then
-              DOCKERFILES="$DOCKERFILES $(echo "$file" | tr -d '\n')"
-            elif [[ $file == *"/start.sh" || $file == *"/config/"* ]]; then
-              DIR=$(dirname "$file")
-              while [[ "$DIR" != "." && "$DIR" != "/" ]]; do
-                if [[ -f "$DIR/Dockerfile" ]]; then
-                  DOCKERFILES="$DOCKERFILES $DIR/Dockerfile"
-                  break
-                fi
-                DIR=$(dirname "$DIR")
-              done
-            fi
-          done <<< "$ALL_CHANGES"
-
-          UNIQUE_DOCKERFILES=$(echo "$DOCKERFILES" | tr ' ' '\n' | sort -u | tr '\n' ' ')
-          echo "dockerfiles=$UNIQUE_DOCKERFILES" >> $GITHUB_OUTPUT
-          echo "Debug - Changed Dockerfiles: $UNIQUE_DOCKERFILES"  # Debugowanie
-
-  build-and-push:
-    needs: [find-changes]
-    runs-on: ubuntu-latest
-    if: needs.find-changes.outputs.changed != ''
     env:
       ACR_REPO: fr0ntierxpublicdev.azurecr.io
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -87,29 +27,24 @@ jobs:
           username: ${{ secrets.AZURE_CLIENT_ID }}
           password: ${{ secrets.AZURE_CLIENT_SECRET }}
 
-      - name: Build and Push Changed Dockerfiles
+      - name: Find and Build Dockerfiles
         run: |
-          DATE=$(date +'%Y%m%d')
-          BRANCH=${GITHUB_REF##*/}
-
-          for file in ${{ needs.find-changes.outputs.changed }}; do
+          # Find all Dockerfiles
+          DOCKERFILES=$(find . -name "Dockerfile" -type f)
+          
+          # Build and push each Dockerfile
+          for file in $DOCKERFILES; do
             SERVICE_DIR=$(dirname "$file")
             SERVICE_NAME=$(basename "$SERVICE_DIR")
             
-            if [[ "$SERVICE_DIR" == "." ]]; then
-              SERVICE_NAME=$(echo "$GITHUB_REPOSITORY" | awk -F '/' '{print $2}')
-            fi
-            
             echo "🏗️ Building $SERVICE_NAME from $file"
             
+            # Build and tag
             docker build -f "$file" -t $SERVICE_NAME .
             docker tag $SERVICE_NAME ${{ env.ACR_REPO }}/$SERVICE_NAME:latest
-            docker tag $SERVICE_NAME ${{ env.ACR_REPO }}/$SERVICE_NAME:$DATE
-            docker tag $SERVICE_NAME ${{ env.ACR_REPO }}/$SERVICE_NAME:$BRANCH-$DATE
             
+            # Push
             docker push ${{ env.ACR_REPO }}/$SERVICE_NAME:latest
-            docker push ${{ env.ACR_REPO }}/$SERVICE_NAME:$DATE
-            docker push ${{ env.ACR_REPO }}/$SERVICE_NAME:$BRANCH-$DATE
             
-            echo "✅ Pushed $SERVICE_NAME with tags: latest, $DATE, $BRANCH-$DATE"
+            echo "✅ Pushed $SERVICE_NAME"
           done
