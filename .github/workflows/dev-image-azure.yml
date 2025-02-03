@@ -9,6 +9,7 @@ on:
       - "**/Dockerfile*"
       - "**/start.sh"
       - "**/config/**"
+      - ".github/workflows/*.yml" 
   workflow_dispatch:
     inputs:
       path:
@@ -21,6 +22,7 @@ permissions:
   id-token: write
   contents: read
   pull-requests: read
+  deployments: write
 
 jobs:
   find-changes:
@@ -51,7 +53,7 @@ jobs:
 
           while IFS= read -r file; do
             if [[ $file == *"Dockerfile"* ]]; then
-              DOCKERFILES="$DOCKERFILES $file"
+              DOCKERFILES="$DOCKERFILES $(echo "$file" | tr -d '\n')"
             elif [[ $file == *"/start.sh" || $file == *"/config/"* ]]; then
               DIR=$(dirname "$file")
               while [[ "$DIR" != "." && "$DIR" != "/" ]]; do
@@ -66,6 +68,7 @@ jobs:
 
           UNIQUE_DOCKERFILES=$(echo "$DOCKERFILES" | tr ' ' '\n' | sort -u | tr '\n' ' ')
           echo "dockerfiles=$UNIQUE_DOCKERFILES" >> $GITHUB_OUTPUT
+          echo "Debug - Changed Dockerfiles: $UNIQUE_DOCKERFILES"  # Debugowanie
 
   build-and-push:
     needs: [find-changes]
@@ -92,6 +95,10 @@ jobs:
           for file in ${{ needs.find-changes.outputs.changed }}; do
             SERVICE_DIR=$(dirname "$file")
             SERVICE_NAME=$(basename "$SERVICE_DIR")
+            
+            if [[ "$SERVICE_DIR" == "." ]]; then
+              SERVICE_NAME=$(echo "$GITHUB_REPOSITORY" | awk -F '/' '{print $2}')
+            fi
             
             echo "🏗️ Building $SERVICE_NAME from $file"
             
