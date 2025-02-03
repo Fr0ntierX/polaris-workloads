@@ -20,7 +20,7 @@ login(token=os.environ['HF_TOKEN'])
 snapshot_download(
     repo_id=os.environ['POLARIS_VLLM_MODEL'],
     local_dir=os.path.join(os.environ['POLARIS_VLLM_DIR'], os.environ['POLARIS_VLLM_MODEL']),
-    revision='main'
+    revision='Q8_0'
 )
     "
     echo "Model $POLARIS_VLLM_MODEL downloaded successfully."
