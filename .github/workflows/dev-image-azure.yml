@@ -38,14 +38,22 @@ jobs:
             SERVICE_DIR=$(dirname "$file")
             SERVICE_NAME=$(basename "$SERVICE_DIR")
             
+            if [ ! -f "$SERVICE_DIR/src/start.sh" ]; then
+              mkdir -p "$SERVICE_DIR/src"
+              cat << 'EOF' > "$SERVICE_DIR/src/start.sh"
+              #!/bin/bash
+              ollama serve
+              EOF
+              chmod +x "$SERVICE_DIR/src/start.sh"
+            fi
+            
             echo "🏗️ Building $SERVICE_NAME from $file"
             
-            # Build and tag
-            docker build -f "$file" -t $SERVICE_NAME .
+            cd "$SERVICE_DIR"
+            docker build -f Dockerfile -t $SERVICE_NAME .
             docker tag $SERVICE_NAME ${{ env.ACR_REPO }}/$SERVICE_NAME:latest
-            
-            # Push
             docker push ${{ env.ACR_REPO }}/$SERVICE_NAME:latest
+            cd -
             
             echo "✅ Pushed $SERVICE_NAME"
           done
