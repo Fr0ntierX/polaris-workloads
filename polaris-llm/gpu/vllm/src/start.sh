@@ -10,17 +10,26 @@ if [ -z "$POLARIS_VLLM_MODEL" ]; then
     exit 1
 fi
 
-if [ ! -d "$POLARIS_VLLM_DIR/$POLARIS_VLLM_MODEL-$POLARIS_VLLM_VERSION" ]; then
+if [ -z "$POLARIS_VLLM_VERSION" ]; then
+    POLARIS_VLLM_VERSION="Q8_0"
+    echo "No version specified. Defaulting to version $POLARIS_VLLM_VERSION."
+fi
+
+MODEL_DIR="$POLARIS_VLLM_DIR/$POLARIS_VLLM_MODEL-$POLARIS_VLLM_VERSION"
+
+if [ ! -d "$MODEL_DIR" ]; then
     echo "Model $POLARIS_VLLM_MODEL not found locally. Downloading..."
     python -c "
 import os
 from huggingface_hub import login, snapshot_download
 
 login(token=os.environ['HF_TOKEN'])
+
+# Pobranie modelu z określoną wersją
 snapshot_download(
     repo_id=os.environ['POLARIS_VLLM_MODEL'],
-    local_dir=os.path.join(os.environ['POLARIS_VLLM_DIR'], os.environ['POLARIS_VLLM_MODEL']),
-    revision='Q8_0'
+    local_dir=os.path.join(os.environ['POLARIS_VLLM_DIR'], os.environ['POLARIS_VLLM_MODEL'] + '-' + os.environ['POLARIS_VLLM_VERSION']),
+    revision=os.environ['POLARIS_VLLM_VERSION']
 )
     "
     echo "Model $POLARIS_VLLM_MODEL downloaded successfully."
@@ -31,6 +40,6 @@ fi
 export VLLM_HOST="0.0.0.0"
 export VLLM_DEVICE="cuda"
 
-vllm serve "$POLARIS_VLLM_MODEL" \
+vllm serve "$MODEL_DIR" \
     --port 8000 \
     --device $VLLM_DEVICE
