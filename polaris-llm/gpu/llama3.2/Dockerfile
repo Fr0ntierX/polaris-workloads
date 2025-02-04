@@ -1,6 +1,5 @@
 FROM ubuntu:24.04
 
-ENV test="test4"
 
 # Install dependencies and Ollama
 RUN apt update && apt upgrade -y && \
@@ -9,7 +8,7 @@ RUN apt update && apt upgrade -y && \
   apt clean && rm -rf /var/lib/apt/lists/*
 
 # Prepare Ollama
-ENV POLARIS_LLM_OLLAMA_MODEL=llama3.3:70b-instruct-fp16
+ENV POLARIS_LLM_OLLAMA_MODEL=llama3.2:3b-instruct-fp16
 
 COPY src/start.sh /opt/start.sh
 RUN chmod +x /opt/start.sh
