@@ -40,7 +40,6 @@ jobs:
           fi
           echo "changes=$CHANGED" >> $GITHUB_OUTPUT
           echo "Found Dockerfiles: $CHANGED"
-
       - name: Build and Push Changed Images
         if: steps.files.outputs.changes != ''
         run: |
