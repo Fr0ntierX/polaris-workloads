@@ -2,7 +2,6 @@ name: (DEV) Build and Push Docker Images Azure
 
 on:
   pull_request:
-    types: [closed]
     branches:
       - dev
   workflow_dispatch:
