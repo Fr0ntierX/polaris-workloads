@@ -3,7 +3,7 @@ name: (DEV) Build and Push Docker Images Azure
 on:
   push:
     branches:
-      - test/workflows
+      - dev
   workflow_dispatch:
 
 permissions:
@@ -21,8 +21,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-        with:
-          fetch-depth: 2
 
       - name: Log in to Azure Container Registry
         uses: azure/docker-login@v1
@@ -34,7 +32,6 @@ jobs:
       - name: Get changed files
         id: files
         run: |
-          # Convert newlines to spaces for output
           CHANGED=$(git diff --name-only HEAD^ HEAD | grep Dockerfile | tr '\n' ' ')
           echo "changes=$CHANGED" >> $GITHUB_OUTPUT
           echo "Found Dockerfiles: $CHANGED"
@@ -42,7 +39,6 @@ jobs:
       - name: Build and Push Changed Images
         if: steps.files.outputs.changes != ''
         run: |
-          # Convert space-separated string to array
           DOCKERFILES=(${{ steps.files.outputs.changes }})
           
           for file in "${DOCKERFILES[@]}"; do
@@ -52,7 +48,7 @@ jobs:
             PROJECT=$(basename $(dirname "$PARENT_DIR"))
             IMAGE_NAME="$PROJECT-$SERVICE-$TYPE"
             
-            echo "🏗️ Building $IMAGE_NAME from $file"
+            echo "Building $IMAGE_NAME from $file"
             cd $(dirname "$file")
             docker build -f Dockerfile -t $IMAGE_NAME .
             docker tag $IMAGE_NAME ${{ env.ACR_REPO }}/$IMAGE_NAME:latest
