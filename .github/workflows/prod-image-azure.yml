@@ -34,10 +34,14 @@ jobs:
       - name: Get changed files
         id: files
         run: |
-          CHANGED=$(git diff --name-only HEAD^ HEAD | grep Dockerfile | tr '\n' ' ')
+          git fetch --prune --unshallow
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            CHANGED=$(find . -name "Dockerfile" | tr '\n' ' ')
+          else
+            CHANGED=$(git diff --name-only HEAD^ HEAD | grep Dockerfile || true)
+          fi
           echo "changes=$CHANGED" >> $GITHUB_OUTPUT
           echo "Found Dockerfiles: $CHANGED"
-
       - name: Build and Push Changed Images
         if: steps.files.outputs.changes != ''
         run: |
