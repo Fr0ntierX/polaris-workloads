@@ -1,25 +1,22 @@
-name: (PRODUCTION) Build and Push Docker Image Azure
+name: (PRODUCTION) Build and Push Docker Images Azure
 
 on:
   push:
     branches:
       - release/prod
-    paths:
-      - src/**
   workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
 
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
-    environment: Docker
-
-    permissions:
-      id-token: write
-      contents: read
+    environment: Docker rod
 
     env:
-      IMAGE_NAME: polaris-proxy
-      ACR_REPO: fr0ntierxpublic.azurecr.io/polaris-proxy
+      ACR_REPO: fr0ntierxpublic.azurecr.io
 
     steps:
       - name: Checkout code
@@ -32,14 +29,30 @@ jobs:
           username: ${{ secrets.AZURE_CLIENT_ID }}
           password: ${{ secrets.AZURE_CLIENT_SECRET }}
 
-      - name: Build Docker image
+      - name: Get changed files
+        id: files
         run: |
-          docker build -t $IMAGE_NAME .
+          CHANGED=$(git diff --name-only HEAD^ HEAD | grep Dockerfile | tr '\n' ' ')
+          echo "changes=$CHANGED" >> $GITHUB_OUTPUT
+          echo "Found Dockerfiles: $CHANGED"
 
-      - name: Tag image for Azure Container Registry
+      - name: Build and Push Changed Images
+        if: steps.files.outputs.changes != ''
         run: |
-          docker tag $IMAGE_NAME $ACR_REPO:latest
-
-      - name: Push image to Azure Container Registry
-        run: |
-          docker push $ACR_REPO:latest
+          DOCKERFILES=(${{ steps.files.outputs.changes }})
+          
+          for file in "${DOCKERFILES[@]}"; do
+            PARENT_DIR=$(dirname $(dirname "$file"))
+            TYPE=$(basename $(dirname "$file"))
+            SERVICE=$(basename "$PARENT_DIR")
+            PROJECT=$(basename $(dirname "$PARENT_DIR"))
+            IMAGE_NAME="$PROJECT-$SERVICE-$TYPE"
+            
+            echo "Building $IMAGE_NAME from $file"
+            cd $(dirname "$file")
+            docker build -f Dockerfile -t $IMAGE_NAME .
+            docker tag $IMAGE_NAME ${{ env.ACR_REPO }}/$IMAGE_NAME:latest
+            docker push ${{ env.ACR_REPO }}/$IMAGE_NAME:latest
+            cd -
+            echo "✅ Pushed $IMAGE_NAME"
+          done

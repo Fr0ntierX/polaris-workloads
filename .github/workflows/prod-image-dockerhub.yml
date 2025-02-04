@@ -1,25 +1,22 @@
-name: (PRODUCTION) Build and Push Docker Image DockerHub
+name: (PRODUCTION) Build and Push Docker Images DockerHub
 
 on:
   push:
     branches:
       - release/prod
-    paths:
-      - src/**
   workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
 
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
     environment: Docker
 
-    permissions:
-      id-token: write
-      contents: read
-
     env:
-      IMAGE_NAME: polaris-proxy
-      DOCKERHUB_REPO: fr0ntierx/polaris-proxy
+      DOCKERHUB_REPO: fr0ntierx
 
     steps:
       - name: Checkout code
@@ -31,14 +28,30 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build Docker image
+      - name: Get changed files
+        id: files
         run: |
-          docker build -t $IMAGE_NAME .
+          CHANGED=$(git diff --name-only HEAD^ HEAD | grep Dockerfile | tr '\n' ' ')
+          echo "changes=$CHANGED" >> $GITHUB_OUTPUT
+          echo "Found Dockerfiles: $CHANGED"
 
-      - name: Tag image for DockerHub
+      - name: Build and Push Changed Images
+        if: steps.files.outputs.changes != ''
         run: |
-          docker tag $IMAGE_NAME $DOCKERHUB_REPO:latest
-
-      - name: Push image to DockerHub
-        run: |
-          docker push $DOCKERHUB_REPO:latest
+          DOCKERFILES=(${{ steps.files.outputs.changes }})
+          
+          for file in "${DOCKERFILES[@]}"; do
+            PARENT_DIR=$(dirname $(dirname "$file"))
+            TYPE=$(basename $(dirname "$file"))
+            SERVICE=$(basename "$PARENT_DIR")
+            PROJECT=$(basename $(dirname "$PARENT_DIR"))
+            IMAGE_NAME="$PROJECT-$SERVICE-$TYPE"
+            
+            echo "🏗️ Building $IMAGE_NAME from $file"
+            cd $(dirname "$file")
+            docker build -f Dockerfile -t $IMAGE_NAME .
+            docker tag $IMAGE_NAME ${{ env.DOCKERHUB_REPO }}/$IMAGE_NAME:latest
+            docker push ${{ env.DOCKERHUB_REPO }}/$IMAGE_NAME:latest
+            cd -
+            echo "✅ Pushed $IMAGE_NAME to DockerHub"
+          done
