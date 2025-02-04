@@ -1,0 +1,59 @@
+name: (DEV) Build and Push Docker Images Azure
+
+on:
+  pull_request:
+    types: [closed]
+    branches:
+      - dev
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.merged == true || github.event_name == 'workflow_dispatch'
+    environment: Docker Dev
+
+    env:
+      ACR_REPO: fr0ntierxpublicdev.azurecr.io
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Log in to Azure Container Registry
+        uses: azure/docker-login@v1
+        with:
+          login-server: fr0ntierxpublicdev.azurecr.io
+          username: ${{ secrets.AZURE_CLIENT_ID }}
+          password: ${{ secrets.AZURE_CLIENT_SECRET }}
+
+      - name: Get changed files
+        id: files
+        run: |
+          CHANGED=$(git diff --name-only HEAD^ HEAD | grep Dockerfile | tr '\n' ' ')
+          echo "changes=$CHANGED" >> $GITHUB_OUTPUT
+          echo "Found Dockerfiles: $CHANGED"
+      - name: Build and Push Changed Images
+        if: steps.files.outputs.changes != ''
+        run: |
+          DOCKERFILES=(${{ steps.files.outputs.changes }})
+
+          for file in "${DOCKERFILES[@]}"; do
+            PARENT_DIR=$(dirname $(dirname "$file"))
+            TYPE=$(basename $(dirname "$file"))
+            SERVICE=$(basename "$PARENT_DIR")
+            PROJECT=$(basename $(dirname "$PARENT_DIR"))
+            IMAGE_NAME="$PROJECT-$SERVICE-$TYPE"
+            
+            echo "Building $IMAGE_NAME from $file"
+            cd $(dirname "$file")
+            docker build -f Dockerfile -t $IMAGE_NAME .
+            docker tag $IMAGE_NAME ${{ env.ACR_REPO }}/$IMAGE_NAME:latest
+            docker push ${{ env.ACR_REPO }}/$IMAGE_NAME:latest
+            cd -
+            echo "✅ Pushed $IMAGE_NAME"
+          done
