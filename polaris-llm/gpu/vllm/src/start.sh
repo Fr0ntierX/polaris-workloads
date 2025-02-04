@@ -10,8 +10,13 @@ if [ -z "$POLARIS_VLLM_MODEL" ]; then
     exit 1
 fi
 
-if [ ! -d "$POLARIS_VLLM_DIR/$POLARIS_VLLM_MODEL" ]; then
-    echo "Model $POLARIS_VLLM_MODEL not found locally. Downloading..."
+# Set cache directories
+export HF_HOME="/mnt/models/.cache/huggingface"
+export TRANSFORMERS_CACHE="/mnt/models/.cache/torch"
+MODEL_PATH="$POLARIS_VLLM_DIR/$POLARIS_VLLM_MODEL"
+
+if [ ! -d "$MODEL_PATH" ]; then
+    echo "Model $POLARIS_VLLM_MODEL not found locally. Downloading to $MODEL_PATH..."
     python -c "
 import os
 from huggingface_hub import login, snapshot_download
@@ -19,7 +24,8 @@ from huggingface_hub import login, snapshot_download
 login(token=os.environ['HF_TOKEN'])
 snapshot_download(
     repo_id=os.environ['POLARIS_VLLM_MODEL'],
-    local_dir=os.path.join(os.environ['POLARIS_VLLM_DIR'], os.environ['POLARIS_VLLM_MODEL']),
+    local_dir=os.environ['MODEL_PATH'],
+    cache_dir=os.environ['HF_HOME'],
     revision='main'
 )
     "
@@ -31,6 +37,6 @@ fi
 export VLLM_HOST="0.0.0.0"
 export VLLM_DEVICE="cuda"
 
-vllm serve "$POLARIS_VLLM_MODEL" \
+vllm serve "$MODEL_PATH" \
     --port 8000 \
     --device $VLLM_DEVICE
