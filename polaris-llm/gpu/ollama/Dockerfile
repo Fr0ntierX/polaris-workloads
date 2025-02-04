@@ -1,5 +1,7 @@
 FROM ubuntu:24.04
 
+ENV test="test3"
+
 # Install dependencies and Ollama
 RUN apt update && apt upgrade -y && \
   apt install curl -y && \

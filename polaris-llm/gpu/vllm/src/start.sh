@@ -1,6 +1,5 @@
 #!/bin/bash
 
-# Required env vars check
 if [ -z "$HF_TOKEN" ]; then
     echo "Error: HF_TOKEN is not set. Please provide your Hugging Face token."
     exit 1
@@ -11,12 +10,8 @@ if [ -z "$POLARIS_VLLM_MODEL" ]; then
     exit 1
 fi
 
-# Set default model variant to Q8_0 if not specified
-MODEL_VARIANT=${POLARIS_MODEL_VARIANT:-Q8_0}
-MODEL_PATH="$POLARIS_VLLM_DIR/$POLARIS_VLLM_MODEL-$MODEL_VARIANT"
-
-if [ ! -d "$MODEL_PATH" ]; then
-    echo "Model $POLARIS_VLLM_MODEL ($MODEL_VARIANT) not found locally. Downloading..."
+if [ ! -d "$POLARIS_VLLM_DIR/$POLARIS_VLLM_MODEL" ]; then
+    echo "Model $POLARIS_VLLM_MODEL not found locally. Downloading..."
     python -c "
 import os
 from huggingface_hub import login, snapshot_download
@@ -24,18 +19,18 @@ from huggingface_hub import login, snapshot_download
 login(token=os.environ['HF_TOKEN'])
 snapshot_download(
     repo_id=os.environ['POLARIS_VLLM_MODEL'],
-    local_dir='$MODEL_PATH',
-    revision='$MODEL_VARIANT'
+    local_dir=os.path.join(os.environ['POLARIS_VLLM_DIR'], os.environ['POLARIS_VLLM_MODEL']),
+    revision='main'
 )
     "
-    echo "Model $POLARIS_VLLM_MODEL ($MODEL_VARIANT) downloaded successfully."
+    echo "Model $POLARIS_VLLM_MODEL downloaded successfully."
 else
-    echo "Model $POLARIS_VLLM_MODEL ($MODEL_VARIANT) already exists locally."
+    echo "Model $POLARIS_VLLM_MODEL already exists locally."
 fi
 
 export VLLM_HOST="0.0.0.0"
 export VLLM_DEVICE="cuda"
 
-vllm serve "$MODEL_PATH" \
+vllm serve "$POLARIS_VLLM_MODEL" \
     --port 8000 \
     --device $VLLM_DEVICE
