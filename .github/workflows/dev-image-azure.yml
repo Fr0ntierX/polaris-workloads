@@ -1,11 +1,10 @@
 name: (DEV) Build and Push Docker Images Azure
 
 on:
-  pull_request:
-    types: [closed]
-    branches:
-      - dev
-  workflow_dispatch:
+    push:
+      branches:
+        - test/workflows
+    workflow_dispatch:
 
 permissions:
   id-token: write
@@ -14,7 +13,6 @@ permissions:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
-    if: github.event.pull_request.merged == true || github.event_name == 'workflow_dispatch'
     environment: Docker Dev
 
     env:

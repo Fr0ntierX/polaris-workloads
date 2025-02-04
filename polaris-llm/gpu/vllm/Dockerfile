@@ -3,6 +3,7 @@ FROM python:3.9-slim
 ENV HF_LOGIN=""
 ENV HF_TOKEN=""
 ENV POLARIS_VLLM_MODEL=""
+
 ENV POLARIS_VLLM_DIR="/mnt/models"
 
 RUN apt-get update && apt-get install -y \
