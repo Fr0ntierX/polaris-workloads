@@ -4,6 +4,7 @@ ENV HF_LOGIN=""
 ENV HF_TOKEN=""
 ENV POLARIS_VLLM_MODEL="1"
 ENV POLARIS_VLLM_DIR="/models"
+ENV test="123"
 
 RUN apt-get update && apt-get install -y \
     git \
