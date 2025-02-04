@@ -1,7 +1,7 @@
 name: (PRODUCTION) Build and Push Docker Images DockerHub
 
 on:
-  push:
+  pull_request:
     branches:
       - release/prod
   workflow_dispatch:
@@ -13,6 +13,7 @@ permissions:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+    if: github.event.pull_request.merged == true || github.event_name == 'workflow_dispatch'
     environment: Docker
 
     env:

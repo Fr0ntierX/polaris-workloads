@@ -2,7 +2,6 @@ name: (PRODUCTION) Build and Push Docker Images Azure
 
 on:
   pull_request:
-    types: [closed]
     branches:
       - release/prod
   workflow_dispatch:
