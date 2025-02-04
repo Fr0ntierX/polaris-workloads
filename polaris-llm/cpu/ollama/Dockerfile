@@ -1,7 +1,7 @@
 FROM ubuntu:24.04
 
 
-ENV test="test4"
+ENV test="test5"
 
 # Install dependencies and Ollama
 RUN apt update && apt upgrade -y && \
