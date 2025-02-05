@@ -15,4 +15,5 @@ RUN chmod +x /opt/start.sh
 
 EXPOSE 11434
 
+
 CMD ["/opt/start.sh"]
