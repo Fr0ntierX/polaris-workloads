@@ -1,6 +1,5 @@
 # Polaris Workloads
 
-## Overview
 Collection of containerized AI/ML workloads optimized for deployment in Polaris Containers. Includes CPU and GPU variants for different use cases.
 
 ## Workloads

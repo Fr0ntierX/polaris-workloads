@@ -1,6 +1,5 @@
 # Polaris LLM - TorchServe GPU
 
-## Overview
 GPU-accelerated container setup for high-performance model serving using TorchServe. Features automated model management and CUDA optimization.
 
 ## Building the Docker Image

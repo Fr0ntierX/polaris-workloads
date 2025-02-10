@@ -1,7 +1,5 @@
 # Polaris LLM - vllm GPU
 
-## Overview
-
 This setup provides a Docker container for running vLLM on a GPU. A start script ensures that all required environment variables are set, downloads the specified model if necessary, and serves it via vLLM.
 
 ## Prerequisites

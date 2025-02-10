@@ -1,6 +1,5 @@
 # Polaris LLM - Ollama GPU
 
-## Overview
 This setup packages the Ollama service in a Docker container for GPU usage. It is designed to run models supported by Ollama. The model must be specified via the environment variable POLARIS_LLM_OLLAMA_MODEL.
 
 ## Building the Docker Image

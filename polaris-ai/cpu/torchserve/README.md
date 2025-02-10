@@ -1,6 +1,5 @@
 # Polaris LLM - TorchServe CPU
 
-## Overview
 CPU-optimized container setup for serving machine learning models using TorchServe. Includes automatic model download and initialization.
 
 ## Building the Docker Image
