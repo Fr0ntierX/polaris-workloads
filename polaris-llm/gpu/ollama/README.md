@@ -5,7 +5,7 @@ This setup packages the Ollama service in a Docker container for GPU usage. It i
 ## Building the Docker Image
 Navigate to this directory:
 ```bash
-cd /polaris-llm/gpu/ollama
+cd polaris-llm/gpu/ollama
 docker build -t polaris-ollama-gpu .
 ```
 

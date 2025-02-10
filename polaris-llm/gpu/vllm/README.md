@@ -15,7 +15,7 @@ Ensure that:
 Navigate to this directory and run:
 
 ```bash
-cd /polaris-llm/gpu/vllm
+cd polaris-llm/gpu/vllm
 docker build -t polaris-vllm:latest .
 ```
 

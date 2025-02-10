@@ -5,7 +5,7 @@ GPU-accelerated container setup for high-performance model serving using TorchSe
 ## Building the Docker Image
 Navigate to this directory and run:
 ```bash
-cd /polaris-ai/gpu/torchserve
+cd polaris-ai/gpu/torchserve
 docker build -t torchserve-gpu .
 ```
 

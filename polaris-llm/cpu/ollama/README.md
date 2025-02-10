@@ -5,7 +5,7 @@ This setup packages the Ollama service in a Docker container for CPU usage. It i
 ## Building the Docker Image
 Navigate to this directory:
 ```bash
-cd /polaris-llm/cpu/ollama
+cd polaris-llm/cpu/ollama
 docker build -t polaris-ollama-cpu .
 ```
 

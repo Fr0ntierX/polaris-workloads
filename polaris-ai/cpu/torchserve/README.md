@@ -5,7 +5,7 @@ CPU-optimized container setup for serving machine learning models using TorchSer
 ## Building the Docker Image
 Navigate to this directory and run:
 ```bash
-cd /polaris-ai/cpu/torchserve
+cd polaris-ai/cpu/torchserve
 docker build -t torchserve-cpu .
 ```
 
