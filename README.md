@@ -6,6 +6,7 @@ Collection of containerized AI/ML workloads optimized for deployment in Polaris 
 
 ### 1. TorchServe
 - [**CPU Version**](polaris-ai/cpu/torchserve/README.md)  
+  - Location: `/polaris-ai/cpu/torchserve` 
   - Overview: Sets up TorchServe for CPU workloads. The start script downloads the model and starts the service.  
 
 - [**GPU Version**](polaris-ai/gpu/torchserve/README.md)  
